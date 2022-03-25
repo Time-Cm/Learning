@@ -6,7 +6,7 @@
  *
  * @copyright Copyright (c) 2022
  *
- * @details 使用蒙特卡洛方法计算圆周率(Calculate pi using Monte Carlo method.)
+ * @details 使用蒙特卡洛方法计算圆周率
  */
 
 #ifndef APP_H
@@ -17,7 +17,7 @@
 
 //以下是用户可修改区
 #define THREADS 4
-#define COUNTS (int)1e6 //总采样次数(Sampling counts)
+#define COUNTS (int)1e6 //总采样次数
 #define POSITION_MAP (long long int)1e6//计算时在正方形区域内随机落点的范围
 
 //以下是核心代码区，不建议修改
