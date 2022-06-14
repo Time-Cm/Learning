@@ -5,11 +5,11 @@ int main(void)
 {
     try
     {
-        // init
+        // 初始化设置
         vulkan_program &app = *(new vulkan_program);
         app.glfwSetting.height = 300;
         app.glfwSetting.weight = 400;
-        // debug
+        // 调试设置
         char *layname = (char *)"VK_LAYER_KHRONOS_validation";
 
         app.debugSetting.vkLayerCount = 1;
@@ -19,7 +19,7 @@ int main(void)
         app.run();
         app.stop();
 
-        //关应用
+        //关闭应用
         delete &app;
     }
     catch (const std::exception &e)
