@@ -5,11 +5,13 @@ using namespace std;
 
 string vulkan_program::bugreport(void)
 {
+    string report;
+    return report;
 }
 
 void vulkan_program::getLocalInfo()
 {
-    //vulkan info
+    // vulkan信息
     {
         using namespace std;
 
@@ -23,7 +25,7 @@ void vulkan_program::getLocalInfo()
             cout << properties[i].layerName << endl;
         }
         delete[] properties;
-        cout << "Using: " << debugSetting.vkLayerName << endl;
+        cout << "Using layer:" << *debugSetting.vkLayerName << endl;
     }
 }
 #endif

@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <vector>
 
-//vk程序类
+// vk程序类
 class vulkan_program
 {
     //自定义变量

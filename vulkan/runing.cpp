@@ -5,7 +5,8 @@ void vulkan_program::run(void)
     if (init() == false)
     {
         using namespace std;
-        cout << "Failed to init" << endl;
+        cerr << "Failed to init" << endl;
+        exit(1);
     }
 
 #if DEBUG
