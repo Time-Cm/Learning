@@ -1,5 +1,5 @@
 #include "vulkan_program.hpp"
-#if DEBUG
+#if RUN_DEBUG
 
 using namespace std;
 
