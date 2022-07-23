@@ -3,7 +3,7 @@
 void vulkan_program::stop(void)
 {
     vkDestroySurfaceKHR(vkData.instance, vkData.surface, nullptr);
-    for (const auto logicDevice : runTimeData.vk.logicDevices)
+    for (const auto &logicDevice : runTimeData.vk.logicDevices)
     {
         vkDestroyDevice(logicDevice.device, nullptr);
     }

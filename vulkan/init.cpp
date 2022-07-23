@@ -45,8 +45,8 @@ bool vulkan_program::basicInit()
                 instanceInfo.enabledExtensionCount = extensions.size();
                 instanceInfo.ppEnabledExtensionNames = extensions.data();
 
-                instanceInfo.enabledLayerCount = debugSetting.vkLayerCount;
-                instanceInfo.ppEnabledLayerNames = debugSetting.vkLayerName;
+                instanceInfo.enabledLayerCount = debugSetting.vkLayerName.size();
+                instanceInfo.ppEnabledLayerNames = debugSetting.vkLayerName.data();
 #else
                 instanceInfo.enabledExtensionCount = glfwExtensionCount;
                 instanceInfo.ppEnabledExtensionNames = glfwExtensions;
@@ -132,8 +132,8 @@ bool vulkan_program::createLogicDevice()
 
         devInfo.pEnabledFeatures = &devF;
 #if RUN_DEBUG
-        devInfo.enabledLayerCount = debugSetting.vkLayerCount;
-        devInfo.ppEnabledLayerNames = debugSetting.vkLayerName;
+        devInfo.enabledLayerCount = debugSetting.vkLayerName.size();
+        devInfo.ppEnabledLayerNames = debugSetting.vkLayerName.data();
 #else
         devInfo.enabledLayerCount = 0;
         devInfo.ppEnabledLayerNames = nullptr;
@@ -190,7 +190,7 @@ uint32_t vulkan_program::getMark(VkPhysicalDevice device)
 bool vulkan_program::getQueueCreateInfo(std::vector<VkDeviceQueueCreateInfo> &queueInfo, std::vector<queueFamily> &queueFamilies)
 {
 
-        for (const auto flag : vkInitSetting.queueFamilyFlag)
+        for (const auto &flag : vkInitSetting.queueFamilyFlag)
         {
                 VkDeviceQueueCreateInfo info = {};
                 float priorities = 1.0f;
@@ -206,10 +206,13 @@ bool vulkan_program::getQueueCreateInfo(std::vector<VkDeviceQueueCreateInfo> &qu
                 info.queueFamilyIndex = index;
                 info.pQueuePriorities = &priorities;
 
+                //队列创建信息记录
                 queueInfo.push_back(info);
 
-                queueFamily family ={};
+                //队列信息记录
+                queueFamily family = {};
                 family.queueFamilyIndex = index;
+                family.queueCount = info.queueCount;
 
                 queueFamilies.push_back(family);
         }
@@ -231,6 +234,17 @@ int32_t vulkan_program::getQueueFamilyIndex(VkQueueFlagBits flag)
                 {
                         targetQueueFamily = i;
                 }
+
+                if (flag == GET_PRESENT_QUEUE)
+                {
+                        VkBool32 support = false;
+                        vkGetPhysicalDeviceSurfaceSupportKHR(vkData.physicalDevice, i, vkData.surface, &support);
+
+                        if (support)
+                        {
+                                targetQueueFamily = i;
+                        }
+                }
         }
 
         delete[] properties;
@@ -239,5 +253,22 @@ int32_t vulkan_program::getQueueFamilyIndex(VkQueueFlagBits flag)
 
 bool vulkan_program::getQueue()
 {
+        for (auto &device : runTimeData.vk.logicDevices)
+        {
+                for (auto &queueFamiles : device.queueFamilies)
+                {
+                        for (uint16_t i = 0; i < queueFamiles.queueCount; i++)
+                        {
+                                VkQueue queue;
+                                vkGetDeviceQueue(device.device, queueFamiles.queueFamilyIndex, i, &queue);
+                                if (queue == VK_NULL_HANDLE)
+                                {
+                                        return false;
+                                }
+
+                                queueFamiles.queue.push_back(queue);
+                        }
+                }
+        }
         return true;
 }

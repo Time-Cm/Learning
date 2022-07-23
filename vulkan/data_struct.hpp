@@ -1,7 +1,10 @@
+#include"native.hpp"
+
 struct queueFamily
 {
     uint32_t queueFamilyIndex;
-    std::vector<uint32_t> queue;
+    uint16_t queueCount;
+    std::vector<VkQueue> queue;
 };
 
 struct logicDevice

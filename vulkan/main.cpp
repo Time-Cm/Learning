@@ -11,13 +11,12 @@ int main(void)
         app.selfptr = &app;
         app.glfwSetting.height = 300;
         app.glfwSetting.weight = 400;
-        app.vkInitSetting.queueFamilyFlag = {VK_QUEUE_GRAPHICS_BIT};
+        app.vkInitSetting.queueFamilyFlag = {VK_QUEUE_GRAPHICS_BIT,GET_PRESENT_QUEUE};
 
         // debug
-        char *layname = (char *)"VK_LAYER_KHRONOS_validation";
 
-        app.debugSetting.vkLayerCount = 1;
-        app.debugSetting.vkLayerName = &layname;
+        app.debugSetting.vkLayerName.push_back((char*)"VK_LAYER_KHRONOS_validation");
+        app.debugSetting.vkLayerName.push_back((char*)"VK_LAYER_MANGOHUD_overlay");
 
         //运行时设定
         app.run();

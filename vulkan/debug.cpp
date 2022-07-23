@@ -25,7 +25,7 @@ void vulkan_program::getLocalInfo()
             cout << properties[i].layerName << endl;
         }
         delete[] properties;
-        cout << "Using layer:" << *debugSetting.vkLayerName << endl;
+        cout << "Using layer:" << *debugSetting.vkLayerName.data() << endl;
     }
 }
 #endif
