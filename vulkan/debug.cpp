@@ -11,21 +11,22 @@ string vulkan_program::bugreport(void)
 
 void vulkan_program::getLocalInfo()
 {
-    // vulkan信息
+    uint32_t laycount;
+    vkEnumerateInstanceLayerProperties(&laycount, nullptr);
+    VkLayerProperties *properties = new VkLayerProperties[laycount];
+    vkEnumerateInstanceLayerProperties(&laycount, properties);
+
+    cout << "Supported layer:" << endl;
+    for (uint32_t i = 0; i < laycount; i++)
     {
-        using namespace std;
+        cout << properties[i].layerName << endl;
+    }
+    delete[] properties;
 
-        uint32_t laycount;
-        vkEnumerateInstanceLayerProperties(&laycount, nullptr);
-        VkLayerProperties *properties = new VkLayerProperties[laycount];
-        vkEnumerateInstanceLayerProperties(&laycount, properties);
-
-        for (uint32_t i = 0; i < laycount; i++)
-        {
-            cout << properties[i].layerName << endl;
-        }
-        delete[] properties;
-        cout << "Using layer:" << *debugSetting.vkLayerName.data() << endl;
+    cout << "Using layer:" << endl;
+    for (const auto &layer : debugSetting.vkLayerName)
+    {
+        cout << layer << endl;
     }
 }
 #endif

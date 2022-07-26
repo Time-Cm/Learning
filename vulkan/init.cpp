@@ -20,9 +20,6 @@ bool vulkan_program::basicInit()
 
                 // 特性
                 glfwExtensions = (char **)glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-#if RUN_DEBUG
-                std::cout << *glfwExtensions << std::endl;
-#endif
         }
         // vulkan初始化
         {
@@ -30,9 +27,9 @@ bool vulkan_program::basicInit()
                 VkApplicationInfo appInfo = {};
                 appInfo.pApplicationName = "test";
                 appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-                appInfo.apiVersion = VK_MAKE_VERSION(1, 0, 3);
+                appInfo.apiVersion = VK_API_VERSION_1_1;
                 appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 3);
-                appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 3);
+                appInfo.engineVersion = VK_API_VERSION_1_1;
 
                 // 实例信息
                 VkInstanceCreateInfo instanceInfo = {};
@@ -47,6 +44,13 @@ bool vulkan_program::basicInit()
 
                 instanceInfo.enabledLayerCount = debugSetting.vkLayerName.size();
                 instanceInfo.ppEnabledLayerNames = debugSetting.vkLayerName.data();
+                getLocalInfo();
+
+                std::cout << "Using extensions:" << std::endl;
+                for (const auto &extension : extensions)
+                {
+                        std::cout << extension << std::endl;
+                }
 #else
                 instanceInfo.enabledExtensionCount = glfwExtensionCount;
                 instanceInfo.ppEnabledExtensionNames = glfwExtensions;
@@ -57,6 +61,9 @@ bool vulkan_program::basicInit()
                 {
                         return false;
                 }
+#if RUN_DEBUG
+                extensions.clear();
+#endif
         }
 
         //物理设备
@@ -74,7 +81,7 @@ bool vulkan_program::basicInit()
                 for (uint32_t i = 0; i < deviceCount; i++)
                 {
                         int32_t dev_mark;
-                        dev_mark = getMark(devices[i]);
+                        dev_mark = deviceMarkRule(devices[i]);
                         if (dev_mark > target_mark)
                         {
                                 target_num = i;
@@ -116,21 +123,19 @@ bool vulkan_program::createLogicDevice()
         std::vector<VkDeviceQueueCreateInfo> queueInfo;
         logicDevice device = {};
 
-        if (getQueueCreateInfo(queueInfo, device.queueFamilies) == false)
+        if (getQueueCreateInfo(queueInfo, device.queueFamilies) == false || checkDeviceExtensionSupport() == false)
         {
                 return false;
-        }
+        }        
 
         //逻辑设备信息
         VkDeviceCreateInfo devInfo = {};
         devInfo.queueCreateInfoCount = queueInfo.size();
         devInfo.pQueueCreateInfos = queueInfo.data();
         devInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
-        //设备特性
-        VkPhysicalDeviceFeatures devF = {};
-
-        devInfo.pEnabledFeatures = &devF;
+        devInfo.pEnabledFeatures = &vkInitSetting.logicDeviceUsingFeatures;
+        devInfo.enabledExtensionCount = vkInitSetting.deviceExtension.size();
+        devInfo.ppEnabledExtensionNames = vkInitSetting.deviceExtension.data();
 #if RUN_DEBUG
         devInfo.enabledLayerCount = debugSetting.vkLayerName.size();
         devInfo.ppEnabledLayerNames = debugSetting.vkLayerName.data();
@@ -148,43 +153,6 @@ bool vulkan_program::createLogicDevice()
         queueInfo.clear();
 
         return true;
-}
-
-uint32_t vulkan_program::getMark(VkPhysicalDevice device)
-{
-        int32_t dev_mark = 0;
-        //设备属性
-        VkPhysicalDeviceProperties device_pro;
-        vkGetPhysicalDeviceProperties(device, &device_pro);
-#if RUN_DEBUG
-        std::cout << device_pro.deviceName << "\n"
-                  << "API version: "
-                  << VK_VERSION_MAJOR(device_pro.apiVersion) << "."
-                  << VK_VERSION_MINOR(device_pro.apiVersion) << "."
-                  << VK_VERSION_PATCH(device_pro.apiVersion)
-                  << std::endl;
-#endif
-
-        //设备特性
-        VkPhysicalDeviceFeatures device_fea;
-        vkGetPhysicalDeviceFeatures(device, &device_fea);
-
-        //评分规则
-        if (device_pro.apiVersion >= VK_MAKE_VERSION(1, 0, 100))
-        {
-                dev_mark += 2;
-        }
-
-        if (device_pro.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU || device_pro.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU || device_pro.deviceType == VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU)
-        {
-                dev_mark += 5;
-        }
-        else if (device_pro.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU)
-        {
-                dev_mark += 2;
-        }
-
-        return dev_mark;
 }
 
 bool vulkan_program::getQueueCreateInfo(std::vector<VkDeviceQueueCreateInfo> &queueInfo, std::vector<queueFamily> &queueFamilies)
@@ -247,6 +215,11 @@ int32_t vulkan_program::getQueueFamilyIndex(VkQueueFlagBits flag)
                 }
         }
 
+        if (targetQueueFamily == -1)
+        {
+                std::cerr << std::hex << "Flag(0x" << flag << ") isn't supported." << std::endl;
+        }
+
         delete[] properties;
         return targetQueueFamily;
 }
@@ -271,4 +244,29 @@ bool vulkan_program::getQueue()
                 }
         }
         return true;
+}
+
+bool vulkan_program::checkDeviceExtensionSupport()
+{
+        uint32_t extensionCount;
+        vkEnumerateDeviceExtensionProperties(vkData.physicalDevice, nullptr, &extensionCount, nullptr);
+        VkExtensionProperties *physicalDeviceExtension = new VkExtensionProperties[extensionCount];
+        vkEnumerateDeviceExtensionProperties(vkData.physicalDevice, nullptr, &extensionCount, physicalDeviceExtension);
+
+        std::set<std::string> extension(vkInitSetting.deviceExtension.begin(), vkInitSetting.deviceExtension.end());
+
+#if RUN_DEBUG
+        std::cout << "Supported Extensions:" << std::endl;
+#endif
+
+        for (uint32_t i = 0; i < extensionCount; i++)
+        {
+                extension.erase(physicalDeviceExtension[i].extensionName);
+#if RUN_DEBUG
+                std::cout << physicalDeviceExtension[i].extensionName << std::endl;
+#endif
+        }
+        delete[] physicalDeviceExtension;
+
+        return extension.empty();
 }

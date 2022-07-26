@@ -52,24 +52,26 @@ public:
 
     struct
     {
+        VkPhysicalDeviceFeatures logicDeviceUsingFeatures = {};
         std::set<VkQueueFlagBits> queueFamilyFlag = {};
+        std::vector<const char *> deviceExtension = {};
     } vkInitSetting;
 
 #if RUN_DEBUG
     struct
     {
-        std::vector<char*> vkLayerName;
+        std::vector<const char *> vkLayerName;
     } debugSetting = {};
 #endif
 
     //自定义函数
 private:
     bool basicInit();
+    bool checkDeviceExtensionSupport();
     bool createLogicDevice();
     bool getQueue();
     bool getQueueCreateInfo(std::vector<VkDeviceQueueCreateInfo> &queueInfo, std::vector<queueFamily> &queueFamilies);
     int32_t getQueueFamilyIndex(VkQueueFlagBits flag);
-    uint32_t getMark(VkPhysicalDevice device);
     uint32_t getQueueIndex(VkPhysicalDevice device, uint8_t queueType, VkQueueFlagBits flagBit);
 #if RUN_DEBUG
     void getLocalInfo();
@@ -81,6 +83,7 @@ public:
     std::string bugreport(void);
 #endif
 
+    uint32_t deviceMarkRule(VkPhysicalDevice device);
     void run(void);
 };
 
